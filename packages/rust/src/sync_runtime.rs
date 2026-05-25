@@ -59,12 +59,20 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 // Conditional imports based on sync feature and native availability
-// Use tokio::sync::RwLock only when not sync AND native feature is enabled
-#[cfg(all(not(feature = "sync"), feature = "native"))]
+// Use tokio::sync::RwLock only for async native (non-wasm) builds
+#[cfg(all(
+    not(feature = "sync"),
+    feature = "native",
+    not(target_arch = "wasm32")
+))]
 use tokio::sync::RwLock;
 
-// Use std::sync::RwLock when sync feature is enabled OR native is not available
-#[cfg(any(feature = "sync", not(feature = "native")))]
+// Use std::sync::RwLock for sync, wasm, or non-native builds
+#[cfg(any(
+    feature = "sync",
+    not(feature = "native"),
+    target_arch = "wasm32"
+))]
 use std::sync::RwLock;
 
 // ============================================================================
@@ -351,11 +359,11 @@ pub trait UnifiedService: Send + Sync {
 // ============================================================================
 
 /// Model handler type for sync builds
-#[cfg(any(feature = "sync", not(feature = "native")))]
+#[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
 pub type UnifiedModelHandler = Box<dyn Fn(serde_json::Value) -> Result<String> + Send + Sync>;
 
 /// Model handler type for async builds
-#[cfg(all(not(feature = "sync"), feature = "native"))]
+#[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
 pub type UnifiedModelHandler = Box<
     dyn Fn(
             serde_json::Value,
@@ -488,12 +496,12 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
         }
 
         // Mark as initialized
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         {
             let mut init = self.initialized.write().await;
             *init = true;
         }
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         {
             let mut init = self.initialized.write().expect("lock poisoned");
             *init = true;
@@ -504,7 +512,7 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
 
     /// Check if initialized
     pub fn is_initialized(&self) -> bool {
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         {
             // For async, we need to use try_read or block
             self.initialized
@@ -512,7 +520,7 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
                 .map(|guard| *guard)
                 .unwrap_or(false)
         }
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         {
             *self.initialized.read().expect("lock poisoned")
         }
@@ -525,13 +533,13 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
 
     /// Register a model handler
     pub fn register_model(&self, model_type: &str, handler: UnifiedModelHandler) {
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         {
             if let Ok(mut handlers) = self.model_handlers.try_write() {
                 handlers.insert(model_type.to_string(), handler);
             }
         }
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         {
             let mut handlers = self.model_handlers.write().expect("lock poisoned");
             handlers.insert(model_type.to_string(), handler);
@@ -541,7 +549,7 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
     /// Use a model to generate text
     #[maybe_async::maybe_async]
     pub async fn use_model(&self, model_type: &str, params: serde_json::Value) -> Result<String> {
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         {
             let handlers = self.model_handlers.read().await;
             let handler = handlers
@@ -549,7 +557,7 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
                 .ok_or_else(|| anyhow::anyhow!("No handler for model: {}", model_type))?;
             handler(params).await
         }
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         {
             let handlers = self.model_handlers.read().expect("lock poisoned");
             let handler = handlers
@@ -562,9 +570,9 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
     /// Get a setting value
     #[maybe_async::maybe_async]
     pub async fn get_setting(&self, key: &str) -> Option<SettingValue> {
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         let character = self.character.read().await;
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         let character = self.character.read().expect("lock poisoned");
 
         // Check secrets first
@@ -582,9 +590,9 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
         }
 
         // Check runtime settings
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         let settings = self.settings.read().await;
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         let settings = self.settings.read().expect("lock poisoned");
 
         settings.values.get(key).cloned()
@@ -594,9 +602,9 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
     #[maybe_async::maybe_async]
     pub async fn set_setting(&self, key: &str, value: SettingValue, secret: bool) {
         if secret {
-            #[cfg(all(not(feature = "sync"), feature = "native"))]
+            #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
             let mut character = self.character.write().await;
-            #[cfg(any(feature = "sync", not(feature = "native")))]
+            #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
             let mut character = self.character.write().expect("lock poisoned");
 
             if character.secrets.is_none() {
@@ -608,9 +616,9 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
                     .insert(key.to_string(), setting_to_json(&value));
             }
         } else {
-            #[cfg(all(not(feature = "sync"), feature = "native"))]
+            #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
             let mut character = self.character.write().await;
-            #[cfg(any(feature = "sync", not(feature = "native")))]
+            #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
             let mut character = self.character.write().expect("lock poisoned");
 
             if character.settings.is_none() {
@@ -633,9 +641,9 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
         let mut state = State::new();
 
         // Get providers
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         let providers: Vec<_> = self.providers.read().await.iter().cloned().collect();
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         let providers: Vec<_> = self
             .providers
             .read()
@@ -679,13 +687,13 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
 
     /// Register an action handler
     pub fn register_action(&self, action: Arc<dyn UnifiedActionHandler>) {
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         {
             if let Ok(mut actions) = self.actions.try_write() {
                 actions.push(action);
             }
         }
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         {
             self.actions.write().expect("lock poisoned").push(action);
         }
@@ -693,13 +701,13 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
 
     /// Register a provider handler
     pub fn register_provider(&self, provider: Arc<dyn UnifiedProviderHandler>) {
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         {
             if let Ok(mut providers) = self.providers.try_write() {
                 providers.push(provider);
             }
         }
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         {
             self.providers
                 .write()
@@ -710,13 +718,13 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
 
     /// Register an evaluator handler
     pub fn register_evaluator(&self, evaluator: Arc<dyn UnifiedEvaluatorHandler>) {
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         {
             if let Ok(mut evaluators) = self.evaluators.try_write() {
                 evaluators.push(evaluator);
             }
         }
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         {
             self.evaluators
                 .write()
@@ -727,14 +735,14 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
 
     /// List action definitions
     pub fn list_action_definitions(&self) -> Vec<ActionDefinition> {
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         {
             self.actions
                 .try_read()
                 .map(|actions| actions.iter().map(|a| a.definition()).collect())
                 .unwrap_or_default()
         }
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         {
             self.actions
                 .read()
@@ -747,14 +755,14 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
 
     /// List provider definitions
     pub fn list_provider_definitions(&self) -> Vec<ProviderDefinition> {
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         {
             self.providers
                 .try_read()
                 .map(|providers| providers.iter().map(|p| p.definition()).collect())
                 .unwrap_or_default()
         }
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         {
             self.providers
                 .read()
@@ -767,14 +775,14 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
 
     /// List evaluator definitions
     pub fn list_evaluator_definitions(&self) -> Vec<EvaluatorDefinition> {
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         {
             self.evaluators
                 .try_read()
                 .map(|evaluators| evaluators.iter().map(|e| e.definition()).collect())
                 .unwrap_or_default()
         }
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         {
             self.evaluators
                 .read()
@@ -795,10 +803,10 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
     ) -> Result<Vec<ActionResult>> {
         let mut results = Vec::new();
 
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         let actions: Vec<Arc<dyn UnifiedActionHandler>> =
             self.actions.read().await.iter().cloned().collect();
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         let actions: Vec<Arc<dyn UnifiedActionHandler>> = self
             .actions
             .read()
@@ -841,10 +849,10 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
     ) -> Result<Vec<ActionResult>> {
         let mut results = Vec::new();
 
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         let evaluators: Vec<Arc<dyn UnifiedEvaluatorHandler>> =
             self.evaluators.read().await.iter().cloned().collect();
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         let evaluators: Vec<Arc<dyn UnifiedEvaluatorHandler>> = self
             .evaluators
             .read()
@@ -874,12 +882,12 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
     pub async fn register_event(&self, event_type: EventType, handler: EventHandler) {
         let event_name = format!("{:?}", event_type);
 
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         {
             let mut events = self.events.write().await;
             events.entry(event_name).or_default().push(handler);
         }
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         {
             let mut events = self.events.write().expect("lock poisoned");
             events.entry(event_name).or_default().push(handler);
@@ -891,9 +899,9 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
     pub async fn emit_event(&self, event_type: EventType, payload: EventPayload) -> Result<()> {
         let event_name = format!("{:?}", event_type);
 
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         let events = self.events.read().await;
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         let events = self.events.read().expect("lock poisoned");
 
         if let Some(handlers) = events.get(&event_name) {
@@ -959,14 +967,14 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
 
     /// Get character name
     pub fn character_name(&self) -> String {
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         {
             self.character
                 .try_read()
                 .map(|c| c.name.clone())
                 .unwrap_or_else(|_| "Agent".to_string())
         }
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         {
             self.character.read().expect("lock poisoned").name.clone()
         }
@@ -974,14 +982,14 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
 
     /// Get character system prompt
     pub fn character_system(&self) -> Option<String> {
-        #[cfg(all(not(feature = "sync"), feature = "native"))]
+        #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
         {
             self.character
                 .try_read()
                 .ok()
                 .and_then(|c| c.system.clone())
         }
-        #[cfg(any(feature = "sync", not(feature = "native")))]
+        #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
         {
             self.character.read().expect("lock poisoned").system.clone()
         }
@@ -1295,7 +1303,7 @@ mod tests {
     }
 
     // ========== SYNC TESTS ==========
-    #[cfg(any(feature = "sync", not(feature = "native")))]
+    #[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
     mod sync_tests {
         use super::*;
 
@@ -1438,7 +1446,7 @@ mod tests {
     }
 
     // ========== ASYNC TESTS ==========
-    #[cfg(all(not(feature = "sync"), feature = "native"))]
+    #[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
     mod async_tests {
         use super::*;
 
