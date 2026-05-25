@@ -59,12 +59,22 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 // Conditional imports based on sync feature and native availability
-// Use tokio::sync::RwLock only when not sync AND native feature is enabled
-#[cfg(all(not(feature = "sync"), feature = "native"))]
+// Use tokio::sync::RwLock only when async native (tokio is linked for non-wasm32 targets)
+#[cfg(all(
+    not(feature = "sync"),
+    feature = "native",
+    not(feature = "wasm"),
+    not(target_arch = "wasm32")
+))]
 use tokio::sync::RwLock;
 
-// Use std::sync::RwLock when sync feature is enabled OR native is not available
-#[cfg(any(feature = "sync", not(feature = "native")))]
+// Use std::sync::RwLock for sync/icp, wasm, or when tokio is unavailable
+#[cfg(any(
+    feature = "sync",
+    not(feature = "native"),
+    feature = "wasm",
+    target_arch = "wasm32"
+))]
 use std::sync::RwLock;
 
 // ============================================================================
