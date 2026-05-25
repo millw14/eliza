@@ -2032,7 +2032,7 @@ impl AgentRuntime {
             let state_map = state.values_map();
             let mut sorted_state_entries: Vec<(&String, &serde_json::Value)> =
                 state_map.iter().collect();
-            sorted_state_entries.sort_by(|(left, _), (right, _)| left.cmp(right));
+            sorted_state_entries.sort_by_key(|(key, _)| key.as_str());
             let mut rendered = prompt.to_string();
             for (key, value) in sorted_state_entries {
                 let placeholder = format!("{{{{{}}}}}", key);
