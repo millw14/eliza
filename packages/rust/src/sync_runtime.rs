@@ -60,19 +60,11 @@ use std::sync::{Arc, Mutex};
 
 // Conditional imports based on sync feature and native availability
 // Use tokio::sync::RwLock only for async native (non-wasm) builds
-#[cfg(all(
-    not(feature = "sync"),
-    feature = "native",
-    not(target_arch = "wasm32")
-))]
+#[cfg(all(not(feature = "sync"), feature = "native", not(target_arch = "wasm32")))]
 use tokio::sync::RwLock;
 
 // Use std::sync::RwLock for sync, wasm, or non-native builds
-#[cfg(any(
-    feature = "sync",
-    not(feature = "native"),
-    target_arch = "wasm32"
-))]
+#[cfg(any(feature = "sync", not(feature = "native"), target_arch = "wasm32"))]
 use std::sync::RwLock;
 
 // ============================================================================
