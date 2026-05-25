@@ -14,7 +14,10 @@ include = ["src/**/*", "Cargo.toml", "build.rs", "proto/**/*"]
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["native"]
+# Empty default: callers must pass `native` or `wasm` explicitly so
+# `cargo check --features wasm --target wasm32-unknown-unknown` does not
+# also enable native-only deps (tokio/sqlx) from the default feature set.
+default = []
 native = ["tokio/full", "sqlx", "which"]
 wasm = ["wasm-bindgen", "wasm-bindgen-futures", "js-sys", "web-sys", "console_error_panic_hook", "getrandom/js"]
 bootstrap = ["native", "dep:chrono", "dep:quick-xml"]
