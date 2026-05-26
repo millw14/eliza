@@ -6,7 +6,7 @@
 //!
 //! # Features
 //!
-//! - `native` (default): Enables native Rust runtime with tokio
+//! - `native`: Enables native Rust runtime with tokio
 //! - `wasm`: Enables WASM build with JavaScript interop
 //!
 //! # Example
