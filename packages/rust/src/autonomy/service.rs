@@ -397,10 +397,10 @@ impl AutonomyService {
                 .unwrap_or_default();
 
             if memory.entity_id == *agent_id && event_type == "autonomous-response" {
-                entries.push((memory.created_at.unwrap_or(0), format!("Thought: {}", text)));
+                entries.push((memory.created_at.unwrap_or(0), format!("Thought: {text}")));
             } else if memory.entity_id == *autonomy_entity_id && event_type == "autonomous-trigger"
             {
-                entries.push((memory.created_at.unwrap_or(0), format!("Trigger: {}", text)));
+                entries.push((memory.created_at.unwrap_or(0), format!("Trigger: {text}")));
             }
         }
 
@@ -455,11 +455,11 @@ impl AutonomyService {
                 } else {
                     memory.entity_id.to_string()
                 };
-                lines.push(format!("{}: {}", author, text));
+                lines.push(format!("{author}: {text}"));
             }
 
             if lines.is_empty() {
-                room_sections.push(format!("Room: {}\n(no recent messages)", room_name));
+                room_sections.push(format!("Room: {room_name}\n(no recent messages)"));
             } else {
                 room_sections.push(format!("Room: {}\n{}", room_name, lines.join("\n")));
             }
@@ -486,7 +486,7 @@ impl AutonomyService {
         };
 
         if room_sections.is_empty() {
-            format!("(no rooms configured)\n\n{}", autonomy_section)
+            format!("(no rooms configured)\n\n{autonomy_section}")
         } else {
             format!("{}\n\n{}", room_sections.join("\n\n"), autonomy_section)
         }

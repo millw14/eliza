@@ -274,7 +274,7 @@ impl ProviderHandler for ActionsListProvider {
             .collect::<Vec<_>>()
             .join("\n");
         Ok(ProviderResult {
-            text: Some(format!("[ACTIONS]\n{}\n[/ACTIONS]", lines)),
+            text: Some(format!("[ACTIONS]\n{lines}\n[/ACTIONS]")),
             values: None,
             data: None,
         })
@@ -315,7 +315,7 @@ impl ProviderHandler for ProvidersListProvider {
             .collect::<Vec<_>>()
             .join("\n");
         Ok(ProviderResult {
-            text: Some(format!("[PROVIDERS]\n{}\n[/PROVIDERS]", lines)),
+            text: Some(format!("[PROVIDERS]\n{lines}\n[/PROVIDERS]")),
             values: None,
             data: None,
         })
@@ -353,7 +353,7 @@ impl ProviderHandler for EvaluatorsListProvider {
             .collect::<Vec<_>>()
             .join("\n");
         Ok(ProviderResult {
-            text: Some(format!("[EVALUATORS]\n{}\n[/EVALUATORS]", lines)),
+            text: Some(format!("[EVALUATORS]\n{lines}\n[/EVALUATORS]")),
             values: None,
             data: None,
         })
@@ -410,7 +410,7 @@ impl ProviderHandler for RecentMessagesProvider {
                 } else {
                     "User".to_string()
                 };
-                lines.push(format!("{}: {}", sender, t));
+                lines.push(format!("{sender}: {t}"));
             }
         }
 

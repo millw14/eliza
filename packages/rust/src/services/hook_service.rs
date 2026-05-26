@@ -520,8 +520,7 @@ impl HookService {
             let current_os = get_current_platform();
             if !os_list.iter().any(|os| os == &current_os) {
                 reasons.push(format!(
-                    "OS '{}' not in allowed list: {:?}",
-                    current_os, os_list
+                    "OS '{current_os}' not in allowed list: {os_list:?}"
                 ));
             }
         }
@@ -530,7 +529,7 @@ impl HookService {
         if let Some(ref bins) = requirements.bins {
             for bin in bins {
                 if !has_binary(bin) {
-                    reasons.push(format!("Required binary '{}' not found", bin));
+                    reasons.push(format!("Required binary '{bin}' not found"));
                 }
             }
         }
@@ -538,10 +537,7 @@ impl HookService {
         // Any binaries check
         if let Some(ref any_bins) = requirements.any_bins {
             if !any_bins.iter().any(|b| has_binary(b)) {
-                reasons.push(format!(
-                    "None of the required binaries found: {:?}",
-                    any_bins
-                ));
+                reasons.push(format!("None of the required binaries found: {any_bins:?}"));
             }
         }
 
@@ -551,7 +547,7 @@ impl HookService {
                 match env::var(env_var) {
                     Ok(val) if is_truthy(&val) => {}
                     _ => {
-                        reasons.push(format!("Required env var '{}' not set or falsy", env_var));
+                        reasons.push(format!("Required env var '{env_var}' not set or falsy"));
                     }
                 }
             }
@@ -563,8 +559,7 @@ impl HookService {
                 let value = resolve_config_path(cfg, config_path);
                 if !is_truthy_value(&value) {
                     reasons.push(format!(
-                        "Required config path '{}' not set or falsy",
-                        config_path
+                        "Required config path '{config_path}' not set or falsy"
                     ));
                 }
             }

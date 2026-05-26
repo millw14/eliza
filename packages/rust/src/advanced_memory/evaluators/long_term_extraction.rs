@@ -24,7 +24,7 @@ fn now_unix() -> i64 {
 fn now_iso() -> String {
     // Simple ISO format without chrono: unix timestamp as string
     let ts = now_unix();
-    format!("{}", ts)
+    format!("{ts}")
 }
 
 /// Parse XML memory extraction response from LLM.
@@ -77,7 +77,7 @@ fn parse_memory_extraction_xml(xml: &str) -> Vec<MemoryExtraction> {
 fn compose_prompt(template: &str, vars: &[(&str, &str)]) -> String {
     let mut result = template.to_string();
     for (key, val) in vars {
-        let placeholder = format!("{{{{{}}}}}", key);
+        let placeholder = format!("{{{{{key}}}}}");
         result = result.replace(&placeholder, val);
     }
     result

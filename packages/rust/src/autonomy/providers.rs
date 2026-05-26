@@ -115,7 +115,7 @@ impl ProviderHandler for AdminChatHistoryProvider {
                 };
                 let ts = m.created_at.unwrap_or(0);
                 let text = m.content.text.as_deref().unwrap_or("[No text content]");
-                format!("{} {}: {}", ts, sender, text)
+                format!("{ts} {sender}: {text}")
             })
             .collect::<Vec<String>>()
             .join("\n");
@@ -190,8 +190,7 @@ impl ProviderHandler for AutonomyStatusProvider {
 
         Ok(ProviderResult {
             text: Some(format!(
-                "[AUTONOMY_STATUS]\nCurrent status: {}\nThinking interval: {}ms\n[/AUTONOMY_STATUS]",
-                status, interval
+                "[AUTONOMY_STATUS]\nCurrent status: {status}\nThinking interval: {interval}ms\n[/AUTONOMY_STATUS]"
             )),
             data: Some(HashMap::from([
                 ("autonomyEnabled".to_string(), Value::Bool(enabled)),

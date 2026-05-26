@@ -78,7 +78,7 @@ impl ProviderHandler for ContextSummaryProvider {
 
         // Format summary without topics
         let message_range = format!("{} messages", current_summary.message_count);
-        let mut summary_only = format!("**Previous Conversation** ({})\\n", message_range);
+        let mut summary_only = format!("**Previous Conversation** ({message_range})\\n");
         summary_only.push_str(&current_summary.summary);
 
         // Format with topics
@@ -89,9 +89,9 @@ impl ProviderHandler for ContextSummaryProvider {
             }
         }
 
-        let session_summaries = format!("# Conversation Summary\n\n{}", summary_only);
+        let session_summaries = format!("# Conversation Summary\n\n{summary_only}");
         let session_summaries_with_topics =
-            format!("# Conversation Summary\n\n{}", summary_with_topics);
+            format!("# Conversation Summary\n\n{summary_with_topics}");
 
         Ok(ProviderResult {
             text: Some(session_summaries_with_topics.clone()),

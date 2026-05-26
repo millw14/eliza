@@ -83,11 +83,11 @@ impl LongTermMemoryProvider {
                 .map(|m| format!("- {}", m.content))
                 .collect::<Vec<_>>()
                 .join("\n");
-            sections.push(format!("**{}**:\n{}", category_name, item_lines));
+            sections.push(format!("**{category_name}**:\n{item_lines}"));
         }
 
         let formatted = sections.join("\n\n");
-        let text = format!("# What I Know About You\n\n{}", formatted);
+        let text = format!("# What I Know About You\n\n{formatted}");
         (text, memories)
     }
 }
@@ -131,7 +131,7 @@ impl ProviderHandler for LongTermMemoryProvider {
                 }
                 let category_list = category_counts
                     .iter()
-                    .map(|(cat, count)| format!("{}: {}", cat, count))
+                    .map(|(cat, count)| format!("{cat}: {count}"))
                     .collect::<Vec<_>>()
                     .join(", ");
 

@@ -89,7 +89,7 @@ fn regex_capture_all(text: &str, pattern: &str) -> Vec<String> {
 fn compose_prompt(template: &str, vars: &[(&str, &str)]) -> String {
     let mut result = template.to_string();
     for (key, val) in vars {
-        let placeholder = format!("{{{{{}}}}}", key);
+        let placeholder = format!("{{{{{key}}}}}");
         result = result.replace(&placeholder, val);
     }
     result

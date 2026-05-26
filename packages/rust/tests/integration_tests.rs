@@ -336,7 +336,7 @@ impl ActionHandler for SearchAction {
 
         Ok(Some(ActionResult {
             success: true,
-            text: Some(format!("Search results for: {}", query)),
+            text: Some(format!("Search results for: {query}")),
             data: Some({
                 let mut map = HashMap::new();
                 map.insert(
@@ -887,11 +887,8 @@ mod memory_tests {
 
         // Create multiple memories in the same room
         for i in 0..5 {
-            let memory = create_test_message(
-                entity_id.clone(),
-                room_id.clone(),
-                &format!("Message {}", i),
-            );
+            let memory =
+                create_test_message(entity_id.clone(), room_id.clone(), &format!("Message {i}"));
             adapter.create_memory(&memory, "memories").await.unwrap();
         }
 

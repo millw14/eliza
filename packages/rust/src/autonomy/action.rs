@@ -78,7 +78,7 @@ impl ActionHandler for SendToAdminAction {
         };
 
         let autonomous_thought = message.content.text.clone().unwrap_or_default();
-        let message_to_admin = format!("Autonomous update: {}", autonomous_thought);
+        let message_to_admin = format!("Autonomous update: {autonomous_thought}");
 
         if let Some(adapter) = rt.get_adapter() {
             let mut content = crate::types::primitives::Content {

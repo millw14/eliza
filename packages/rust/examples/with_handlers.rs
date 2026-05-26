@@ -28,7 +28,7 @@ async fn main() -> anyhow::Result<()> {
                 .get("prompt")
                 .and_then(|value| value.as_str())
                 .unwrap_or("No prompt provided");
-            Ok(format!("Echo: {}", prompt))
+            Ok(format!("Echo: {prompt}"))
         })
     });
 
@@ -38,6 +38,6 @@ async fn main() -> anyhow::Result<()> {
         .use_model("TEXT_LARGE", json!({ "prompt": "Hello from Rust!" }))
         .await?;
 
-    println!("Model response: {}", response);
+    println!("Model response: {response}");
     Ok(())
 }

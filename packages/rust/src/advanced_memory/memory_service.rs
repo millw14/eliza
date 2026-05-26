@@ -72,7 +72,7 @@ impl MemoryService {
     // ── Extraction checkpointing ─────────────────────────────────────
 
     fn extraction_key(entity_id: &UUID, room_id: &UUID) -> String {
-        format!("{}:{}", entity_id, room_id)
+        format!("{entity_id}:{room_id}")
     }
 
     pub fn get_last_extraction_checkpoint(&self, entity_id: &UUID, room_id: &UUID) -> i32 {
@@ -336,7 +336,7 @@ impl MemoryService {
                 .map(|m| format!("- {}", m.content))
                 .collect::<Vec<_>>()
                 .join("\n");
-            sections.push(format!("**{}**:\n{}", category_name, item_lines));
+            sections.push(format!("**{category_name}**:\n{item_lines}"));
         }
 
         Ok(sections.join("\n\n"))

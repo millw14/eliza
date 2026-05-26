@@ -51,7 +51,7 @@ pub fn parse_key_value_xml(xml: &str) -> Option<HashMap<String, String>> {
                 let tag_name = tag_name.split_whitespace().next().unwrap_or(tag_name);
 
                 // Find closing tag
-                let close_tag = format!("</{}>", tag_name);
+                let close_tag = format!("</{tag_name}>");
                 if let Some(close_start_off) = response_content[tag_end + 1..].find(&close_tag) {
                     let close_start = tag_end + 1 + close_start_off;
                     let value = response_content[tag_end + 1..close_start].trim();
@@ -125,12 +125,12 @@ fn extract_xml_children(xml: &str) -> Vec<(String, String)> {
             continue;
         }
 
-        let close_seq = format!("</{}>", tag);
+        let close_seq = format!("</{tag}>");
         let mut depth: i32 = 1;
         let mut search_start = start_tag_end + 1;
         while depth > 0 && search_start < bytes.len() {
             let next_open = xml[search_start..]
-                .find(&format!("<{}", tag))
+                .find(&format!("<{tag}"))
                 .map(|off| search_start + off);
             let next_close = match xml[search_start..].find(&close_seq) {
                 Some(off) => search_start + off,

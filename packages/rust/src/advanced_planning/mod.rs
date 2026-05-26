@@ -668,8 +668,7 @@ impl PlanningService {
             .unwrap_or_default();
 
         let prompt = format!(
-            "You are an expert AI planning system. Create a comprehensive action plan.\n\nGOAL: {}\n\nAVAILABLE ACTIONS: {}\n\nReturn XML with <plan><goal>..</goal><execution_model>..</execution_model><steps><step><id>..</id><action>..</action><parameters>{{}}</parameters><dependencies>[]</dependencies></step></steps></plan>",
-            goal, available_actions
+            "You are an expert AI planning system. Create a comprehensive action plan.\n\nGOAL: {goal}\n\nAVAILABLE ACTIONS: {available_actions}\n\nReturn XML with <plan><goal>..</goal><execution_model>..</execution_model><steps><step><id>..</id><action>..</action><parameters>{{}}</parameters><dependencies>[]</dependencies></step></steps></plan>"
         );
 
         let params = serde_json::json!({

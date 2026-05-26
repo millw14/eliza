@@ -546,7 +546,7 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
             let handlers = self.model_handlers.read().await;
             let handler = handlers
                 .get(model_type)
-                .ok_or_else(|| anyhow::anyhow!("No handler for model: {}", model_type))?;
+                .ok_or_else(|| anyhow::anyhow!("No handler for model: {model_type}"))?;
             handler(params).await
         }
         #[cfg(any(feature = "sync", not(feature = "native")))]
@@ -671,7 +671,7 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
             }
             state
                 .text
-                .push_str(&format!("# Current Message\nUser: {}", text));
+                .push_str(&format!("# Current Message\nUser: {text}"));
         }
 
         Ok(state)
@@ -872,7 +872,7 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
     /// Register an event handler
     #[maybe_async::maybe_async]
     pub async fn register_event(&self, event_type: EventType, handler: EventHandler) {
-        let event_name = format!("{:?}", event_type);
+        let event_name = format!("{event_type:?}");
 
         #[cfg(all(not(feature = "sync"), feature = "native"))]
         {
@@ -889,7 +889,7 @@ impl<A: UnifiedDatabaseAdapter + 'static> UnifiedRuntime<A> {
     /// Emit an event
     #[maybe_async::maybe_async]
     pub async fn emit_event(&self, event_type: EventType, payload: EventPayload) -> Result<()> {
-        let event_name = format!("{:?}", event_type);
+        let event_name = format!("{event_type:?}");
 
         #[cfg(all(not(feature = "sync"), feature = "native"))]
         let events = self.events.read().await;

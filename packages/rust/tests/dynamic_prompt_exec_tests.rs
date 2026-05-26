@@ -273,11 +273,10 @@ mod parity {
         ];
 
         for expected in &expected_types {
-            let quoted = format!("\"{}\"", expected);
+            let quoted = format!("\"{expected}\"");
             assert!(
                 type_values.contains(&quoted),
-                "Missing event type: {}",
-                expected
+                "Missing event type: {expected}"
             );
         }
     }
@@ -298,7 +297,7 @@ mod parity {
         ];
 
         for (level, description) in &levels {
-            assert!(*level <= 3, "Invalid level {}: {}", level, description);
+            assert!(*level <= 3, "Invalid level {level}: {description}");
         }
     }
 }

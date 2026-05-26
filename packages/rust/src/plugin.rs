@@ -31,7 +31,7 @@ pub fn register_plugin_factory(name: &str, factory: PluginFactory) {
 
     // Register scoped alias if input is short name
     if !name.starts_with('@') {
-        registry.insert(format!("@elizaos/plugin-{}", name), factory.clone());
+        registry.insert(format!("@elizaos/plugin-{name}"), factory.clone());
     }
 
     // Register short alias if input is scoped name
@@ -109,8 +109,7 @@ pub fn load_plugin(name: &str) -> Result<Plugin> {
         Some(f) => f,
         None => {
             anyhow::bail!(
-                "Plugin '{}' not found. Register it first via register_plugin_factory().",
-                name
+                "Plugin '{name}' not found. Register it first via register_plugin_factory()."
             );
         }
     };
@@ -187,10 +186,7 @@ pub fn resolve_plugin_dependencies(
                 "Circular dependency detected for plugin: {}",
                 canonical_name
             );
-            anyhow::bail!(
-                "Circular dependency detected for plugin: {}",
-                canonical_name
-            );
+            anyhow::bail!("Circular dependency detected for plugin: {canonical_name}");
         }
 
         visiting.insert(canonical_name.clone());
@@ -277,7 +273,7 @@ mod tests {
         Plugin {
             definition: PluginDefinition {
                 name: name.to_string(),
-                description: format!("{} plugin", name),
+                description: format!("{name} plugin"),
                 dependencies: if deps.is_empty() {
                     None
                 } else {

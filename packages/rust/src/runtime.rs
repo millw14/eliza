@@ -421,7 +421,7 @@ impl AgentRuntime {
                 use std::sync::atomic::Ordering;
                 let counter = ANONYMOUS_AGENT_COUNTER.fetch_add(1, Ordering::SeqCst) + 1;
                 let character = Character {
-                    name: format!("Agent-{}", counter),
+                    name: format!("Agent-{counter}"),
                     bio: Bio::Single("An anonymous agent".to_string()),
                     ..Default::default()
                 };
@@ -1361,10 +1361,7 @@ impl AgentRuntime {
             let handler = handler_idx.map(|&i| &handlers[i]);
 
             let Some(handler) = handler else {
-                results.push(ActionResult::failure(&format!(
-                    "Action not found: {}",
-                    name
-                )));
+                results.push(ActionResult::failure(&format!("Action not found: {name}")));
                 continue;
             };
 
@@ -1488,7 +1485,7 @@ impl AgentRuntime {
 
     /// Emit an event
     pub async fn emit_event(&self, event_type: EventType, payload: EventPayload) -> Result<()> {
-        let event_name = format!("{:?}", event_type);
+        let event_name = format!("{event_type:?}");
 
         #[cfg(not(feature = "wasm"))]
         let events = self.events.read().await;
@@ -1508,7 +1505,7 @@ impl AgentRuntime {
 
     /// Register an event handler
     pub async fn register_event(&self, event_type: EventType, handler: EventHandler) {
-        let event_name = format!("{:?}", event_type);
+        let event_name = format!("{event_type:?}");
 
         #[cfg(not(feature = "wasm"))]
         {
@@ -1711,8 +1708,7 @@ impl AgentRuntime {
         match handler_future {
             Some(future) => future.await,
             None => Err(anyhow::anyhow!(
-                "No streaming model handler registered for type: {}. Register a streaming model handler using register_streaming_model().",
-                effective_model_type
+                "No streaming model handler registered for type: {effective_model_type}. Register a streaming model handler using register_streaming_model()."
             )),
         }
     }
@@ -1792,8 +1788,7 @@ impl AgentRuntime {
         let result = match handler {
             Some(future) => future.await,
             None => Err(anyhow::anyhow!(
-                "No model handler registered for type: {}. Register a model handler using register_model() or pass a plugin with model handlers.",
-                effective_model_type
+                "No model handler registered for type: {effective_model_type}. Register a model handler using register_model() or pass a plugin with model handlers."
             )),
         };
 
@@ -1952,7 +1947,7 @@ impl AgentRuntime {
             .map(|s| s.field.as_str())
             .collect::<Vec<_>>()
             .join(",");
-        let model_schema_key = format!("{}:{}", model_type_str, schema_key);
+        let model_schema_key = format!("{model_type_str}:{schema_key}");
 
         // Get validation level from settings or options (mirrors TypeScript behavior)
         let (default_context_level, default_retries) = {
@@ -1997,7 +1992,7 @@ impl AgentRuntime {
             character_id.as_ref(),
             None,
             Some(state),
-            &format!("dynamic-prompt:{}", model_schema_key),
+            &format!("dynamic-prompt:{model_schema_key}"),
             None,
             chrono_timestamp(),
         );
@@ -2035,7 +2030,7 @@ impl AgentRuntime {
             sorted_state_entries.sort_by(|(left, _), (right, _)| left.cmp(right));
             let mut rendered = prompt.to_string();
             for (key, value) in sorted_state_entries {
-                let placeholder = format!("{{{{{}}}}}", key);
+                let placeholder = format!("{{{{{key}}}}}");
                 let value_str = match value {
                     serde_json::Value::String(s) => s.clone(),
                     other => other.to_string(),
@@ -2067,15 +2062,15 @@ impl AgentRuntime {
             let codes_schema = |prefix: &str| -> Vec<(String, String)> {
                 vec![
                     (
-                        format!("{}initial_code", prefix),
+                        format!("{prefix}initial_code"),
                         "echo the initial UUID code from prompt".to_string(),
                     ),
                     (
-                        format!("{}middle_code", prefix),
+                        format!("{prefix}middle_code"),
                         "echo the middle UUID code from prompt".to_string(),
                     ),
                     (
-                        format!("{}end_code", prefix),
+                        format!("{prefix}end_code"),
                         "echo the end UUID code from prompt".to_string(),
                     ),
                 ]
@@ -2089,14 +2084,14 @@ impl AgentRuntime {
                 if let Some(code) = per_field_codes.get(&row.field) {
                     ext_schema.push((
                         format!("code_{}_start", row.field),
-                        format!("output exactly: {}", code),
+                        format!("output exactly: {code}"),
                     ));
                 }
                 ext_schema.push((row.field.clone(), row.description.clone()));
                 if let Some(code) = per_field_codes.get(&row.field) {
                     ext_schema.push((
                         format!("code_{}_end", row.field),
-                        format!("output exactly: {}", code),
+                        format!("output exactly: {code}"),
                     ));
                 }
             }
@@ -2106,31 +2101,31 @@ impl AgentRuntime {
             }
 
             // Build example
-            let mut example = format!("{}\n", container_start);
+            let mut example = format!("{container_start}\n");
             let ext_schema_len = ext_schema.len();
             for (i, (field, desc)) in ext_schema.iter().enumerate() {
                 let is_last = i == ext_schema_len - 1;
                 if is_xml {
-                    example.push_str(&format!("  <{}>{}</{}>\n", field, desc, field));
+                    example.push_str(&format!("  <{field}>{desc}</{field}>\n"));
                 } else {
                     // No trailing comma on last field for valid JSON
                     let comma = if is_last { "" } else { "," };
-                    example.push_str(&format!("  \"{}\": \"{}\"{}\n", field, desc, comma));
+                    example.push_str(&format!("  \"{field}\": \"{desc}\"{comma}\n"));
                 }
             }
             example.push_str(container_end);
 
             let init_code = deterministic_uuid(
                 &deterministic_validation_seed,
-                &format!("init-code:{}", current_retry),
+                &format!("init-code:{current_retry}"),
             );
             let mid_code = deterministic_uuid(
                 &deterministic_validation_seed,
-                &format!("mid-code:{}", current_retry),
+                &format!("mid-code:{current_retry}"),
             );
             let final_code = deterministic_uuid(
                 &deterministic_validation_seed,
-                &format!("final-code:{}", current_retry),
+                &format!("final-code:{current_retry}"),
             );
 
             let section_start = if is_xml {
@@ -2141,29 +2136,14 @@ impl AgentRuntime {
             let section_end = if is_xml { "</output>" } else { "" };
 
             let full_prompt = format!(
-                "initial code: {}\n{}\nmiddle code: {}\n{}\n\
+                "initial code: {init_code}\n{rendered}\nmiddle code: {mid_code}\n{section_start}\n\
                 Do NOT include any thinking, reasoning, or <think> sections in your response.\n\
-                Go directly to the {} response format without any preamble or explanation.\n\n\
-                Respond using {} format like this:\n{}\n\n\
-                IMPORTANT: Your response must ONLY contain the {}{} {} block above. \
-                Do not include any text, thinking, or reasoning before or after this {} block. \
-                Start your response immediately with {} and end with {}.\n\
-                {}\nend code: {}\n",
-                init_code,
-                rendered,
-                mid_code,
-                section_start,
-                format,
-                format,
-                example,
-                container_start,
-                container_end,
-                format,
-                format,
-                container_start,
-                container_end,
-                section_end,
-                final_code
+                Go directly to the {format} response format without any preamble or explanation.\n\n\
+                Respond using {format} format like this:\n{example}\n\n\
+                IMPORTANT: Your response must ONLY contain the {container_start}{container_end} {format} block above. \
+                Do not include any text, thinking, or reasoning before or after this {format} block. \
+                Start your response immediately with {container_start} and end with {container_end}.\n\
+                {section_end}\nend code: {final_code}\n"
             );
 
             debug!("dynamic_prompt_exec_from_state: using format {}", format);
@@ -2209,7 +2189,7 @@ impl AgentRuntime {
             let response = match self.use_model(model_type_str, params).await {
                 Ok(r) => r,
                 Err(e) => {
-                    let err_msg = format!("Model call failed: {}", e);
+                    let err_msg = format!("Model call failed: {e}");
                     error!("{}", err_msg);
                     last_error = Some(err_msg);
                     current_retry += 1;
@@ -2256,8 +2236,8 @@ impl AgentRuntime {
                 if validation_level <= 1 {
                     // Per-field validation
                     for (field, expected_code) in &per_field_codes {
-                        let start_code_field = format!("code_{}_start", field);
-                        let end_code_field = format!("code_{}_end", field);
+                        let start_code_field = format!("code_{field}_start");
+                        let end_code_field = format!("code_{field}_end");
                         let start_code = content.get(&start_code_field).and_then(|v| v.as_str());
                         let end_code = content.get(&end_code_field).and_then(|v| v.as_str());
 
@@ -2314,8 +2294,8 @@ impl AgentRuntime {
                 if let Some(serde_json::Value::Object(ref mut obj)) = parsed {
                     // Remove per-field codes
                     for field in per_field_codes.keys() {
-                        obj.remove(&format!("code_{}_start", field));
-                        obj.remove(&format!("code_{}_end", field));
+                        obj.remove(&format!("code_{field}_start"));
+                        obj.remove(&format!("code_{field}_end"));
                     }
                     // Remove checkpoint codes
                     if first {
@@ -2354,8 +2334,8 @@ impl AgentRuntime {
                     // Find validated fields (those with correct codes)
                     let mut validated_fields: Vec<String> = Vec::new();
                     for (field, expected_code) in &per_field_codes {
-                        let start_code_field = format!("code_{}_start", field);
-                        let end_code_field = format!("code_{}_end", field);
+                        let start_code_field = format!("code_{field}_start");
+                        let end_code_field = format!("code_{field}_end");
                         let start_code = content.get(&start_code_field).and_then(|v| v.as_str());
                         let end_code = content.get(&end_code_field).and_then(|v| v.as_str());
 
@@ -2380,8 +2360,7 @@ impl AgentRuntime {
                                 } else {
                                     content_str
                                 };
-                                validated_parts
-                                    .push(format!("<{}>{}</{}>", field, truncated, field));
+                                validated_parts.push(format!("<{field}>{truncated}</{field}>"));
                             }
                         }
 
@@ -2537,8 +2516,8 @@ fn parse_xml_to_json(xml: &str) -> Option<serde_json::Value> {
                 }
 
                 // Find matching closing tag (handles nesting)
-                let close_tag = format!("</{}>", tag_name);
-                let open_tag_start = format!("<{}", tag_name);
+                let close_tag = format!("</{tag_name}>");
+                let open_tag_start = format!("<{tag_name}");
                 let content_start_idx = open_start + 1 + open_end + 1;
 
                 // Count nesting depth to find correct closing tag

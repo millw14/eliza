@@ -433,8 +433,8 @@ where
 
         for row in self.config.schema.clone() {
             let field = &row.field;
-            let open_tag = format!("<{}>", field);
-            let close_tag = format!("</{}>", field);
+            let open_tag = format!("<{field}>");
+            let close_tag = format!("</{field}>");
 
             if let Some(open_idx) = self.buffer.find(&open_tag) {
                 let content_start = open_idx + open_tag.len();
@@ -495,14 +495,12 @@ where
                     } else if start_code_valid && !end_code_valid {
                         self.field_states.insert(field.clone(), FieldState::Invalid);
                         self.emit_event(StreamEvent::error(format!(
-                            "End validation code mismatch for {}",
-                            field
+                            "End validation code mismatch for {field}"
                         )));
                     } else {
                         self.field_states.insert(field.clone(), FieldState::Invalid);
                         self.emit_event(StreamEvent::error(format!(
-                            "Validation codes mismatch for {}",
-                            field
+                            "Validation codes mismatch for {field}"
                         )));
                     }
                 }
@@ -520,9 +518,9 @@ where
     }
 
     fn check_validation_code(&self, field: &str, position: &str, expected_code: &str) -> bool {
-        let code_field = format!("code_{}_{}", field, position);
-        let open_tag = format!("<{}>", code_field);
-        let close_tag = format!("</{}>", code_field);
+        let code_field = format!("code_{field}_{position}");
+        let open_tag = format!("<{code_field}>");
+        let close_tag = format!("</{code_field}>");
 
         if let Some(open_idx) = self.buffer.find(&open_tag) {
             let content_start = open_idx + open_tag.len();

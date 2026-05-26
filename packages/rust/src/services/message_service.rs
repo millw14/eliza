@@ -715,11 +715,7 @@ fn format_action_results(results: &[crate::types::ActionResult]) -> String {
             .unwrap_or("");
         let status = if r.success { "success" } else { "failed" };
         let text = r.text.clone().unwrap_or_default();
-        lines.push(
-            format!("- {} ({}): {}", name, status, text)
-                .trim()
-                .to_string(),
-        );
+        lines.push(format!("- {name} ({status}): {text}").trim().to_string());
     }
     lines.join("\n")
 }
